@@ -117,14 +117,15 @@ SELECT * FROM Customers;
 
 -- Используя вложенные запросы и ShopDB получить имена покупателей и имена сотрудников у которых TotalPrice товара больше 1000 --
 
-SELECT c.LName AS Покупець_Прізвище, c.FName AS Покупець_Імя, c.MName AS Покупець_По_Батькові,
-e.LName AS Працівник_Прізвище, e.FName AS Працівник_Імя, e.MName AS Працівник_По_Батькові, SUM(od.TotalPrice) AS PriceOfOrders
-FROM customers as c
-	    INNER JOIN Orders as o
-			ON o.customerNo = c.customerNo
-	     INNER JOIN Employees as e
-			ON e.EmployeeID = o.EmployeeID
-		INNER JOIN Orderdetails as od
-            ON od.OrderID = o.OrderID     
-GROUP BY  c.FName, c.LName, e.FName, e.LName
-HAVING SUM(od.TotalPrice) > 1000;
+SELECT (SELECT shopdb.customers.LName FROM shopdb.customers WHERE shopdb.customers.CustomerNo = 
+(SELECT shopdb.orders.CustomerNo FROM shopdb.orders WHERE shopdb.orders.OrderID = shopdb.orderdetails.OrderID)) AS last_name_custumer,
+(SELECT shopdb.customers.FName FROM shopdb.customers WHERE shopdb.customers.CustomerNo = 
+(SELECT shopdb.orders.CustomerNo FROM shopdb.orders WHERE shopdb.orders.OrderID = shopdb.orderdetails.OrderID)) AS first_name_custumer, 
+(SELECT shopdb.employees.LName FROM shopdb.employees WHERE shopdb.employees.EmployeeID =
+ (SELECT shopdb.orders.EmployeeID FROM shopdb.orders WHERE shopdb.orders.OrderID = shopdb.orderdetails.OrderID)) AS last_name_employee,
+  (SELECT shopdb.employees.FName FROM shopdb.employees WHERE shopdb.employees.EmployeeID =
+ (SELECT shopdb.orders.EmployeeID FROM shopdb.orders WHERE shopdb.orders.OrderID = shopdb.orderdetails.OrderID)) AS first_name_employee,
+ SUM(shopdb.orderdetails.TotalPrice) AS total_price
+ FROM OrderDetails
+ GROUP BY last_name_custumer, first_name_custumer
+ HAVING total_price > 1000;
